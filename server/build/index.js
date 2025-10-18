@@ -24,6 +24,31 @@ const server = new McpServer({
 }, {
     capabilities: {},
 });
+export const StructuredOutput = z.object({
+    name: z.string({ description: "Pokemon name." }),
+    id: z.number({ description: "Pokemon index id." }).int(),
+    height: z.number({ description: "Pokemon height." }).int(),
+    weight: z.number({ description: "Pokemon weight." }).int(),
+    types: z.array(z.object({
+        slot: z.number().int(),
+        type: z.object({
+            name: z.string({ description: "type name." }),
+            url: z.string({ description: "URL to get type detail." }).url(),
+        })
+    }))
+});
+export const OutputMeta = z.object({
+    sprites: z.object({
+        back_default: z.string({ description: "URL to get type back_default image." }).url().nullable(),
+        back_female: z.string({ description: "URL to get type back_female image." }).url().nullable(),
+        back_shiny: z.string({ description: "URL to get type back_shiny image." }).url().nullable(),
+        back_shiny_female: z.string({ description: "URL to get type back_shiny_female image." }).url().nullable(),
+        front_default: z.string({ description: "URL to get type front_default image." }).url().nullable(),
+        front_female: z.string({ description: "URL to get type front_female image." }).url().nullable(),
+        front_shiny: z.string({ description: "URL to get type front_shiny image." }).url().nullable(),
+        front_shiny_female: z.string({ description: "URL to get type front_shiny_female image." }).url().nullable(),
+    }, { description: "URLs to get pokmeon images." })
+});
 // Add list pokemons tool
 server.registerTool('get_pokemon', {
     title: 'Get Pokemon',
@@ -37,29 +62,7 @@ server.registerTool('get_pokemon', {
     },
     inputSchema: { name: z.string({ description: "The name of the pokemon to get detail for." }).nonempty() },
     outputSchema: {
-        result: z.object({
-            name: z.string({ description: "Pokemon name." }),
-            id: z.number({ description: "Pokemon index id." }).int(),
-            height: z.number({ description: "Pokemon height." }).int(),
-            weight: z.number({ description: "Pokemon weight." }).int(),
-            types: z.array(z.object({
-                slot: z.number().int(),
-                type: z.object({
-                    name: z.string({ description: "type name." }),
-                    url: z.string({ description: "URL to get type detail." }).url(),
-                })
-            }).passthrough()),
-            sprites: z.object({
-                back_default: z.string({ description: "URL to get type back_default image." }).url().nullable(),
-                back_female: z.string({ description: "URL to get type back_female image." }).url().nullable(),
-                back_shiny: z.string({ description: "URL to get type back_shiny image." }).url().nullable(),
-                back_shiny_female: z.string({ description: "URL to get type back_shiny_female image." }).url().nullable(),
-                front_default: z.string({ description: "URL to get type front_default image." }).url().nullable(),
-                front_female: z.string({ description: "URL to get type front_female image." }).url().nullable(),
-                front_shiny: z.string({ description: "URL to get type front_shiny image." }).url().nullable(),
-                front_shiny_female: z.string({ description: "URL to get type front_shiny_female image." }).url().nullable(),
-            }, { description: "URLs to get pokmeon images." }).passthrough()
-        }).passthrough()
+        result: StructuredOutput
     }
 }, async ({ name }) => {
     if (name.length == 0) {
@@ -70,9 +73,11 @@ server.registerTool('get_pokemon', {
         throw new Error(`HTTP error. status: ${response.status}`);
     }
     const json = await response.json();
+    const structuredOutput = StructuredOutput.parse(json);
     const structuredContent = {
-        result: json
+        result: structuredOutput
     };
+    const meta = OutputMeta.parse(json);
     return {
         content: [
             { type: 'text', text: JSON.stringify(structuredContent) },
@@ -82,9 +87,7 @@ server.registerTool('get_pokemon', {
         // This allows us to define Arbitrary JSON passed only to the component.
         // Use it for data that should not influence the model’s reasoning, like the full set of locations that backs a dropdown.
         // // _meta is never shown to the model.
-        // _meta: {
-        //     "key": "value"
-        // }
+        _meta: meta
     };
 });
 // UI resource (no inline data assignment; host will inject data)

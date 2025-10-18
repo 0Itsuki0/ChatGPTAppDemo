@@ -7,7 +7,6 @@ export async function getPokemon(name: string) {
 
     setOpenAIGlobal("toolInput", toolInput)
     setOpenAIGlobal("toolOutput", null)
-
     const response = await window.openai?.callTool("get_pokemon", { name: name });
 
     // response will have the following key.
@@ -23,5 +22,10 @@ export async function getPokemon(name: string) {
     } else {
         const jsonResult = JSON.parse(response.result)
         setOpenAIGlobal("toolOutput", jsonResult)
+    }
+    if ("meta" in response && response["meta"] !== null) {
+        setOpenAIGlobal("toolResponseMetadata", response["meta"] as any)
+    } else if ("_meta" in response && response["_meta"] !== null) {
+        setOpenAIGlobal("toolResponseMetadata", response["_meta"] as any)
     }
 }

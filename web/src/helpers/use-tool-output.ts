@@ -30,16 +30,16 @@ export const StructuredOutput = z.object({
                 })
             }).loose()
         ),
-        sprites: z.object({
-            back_default: z.url().nullable(),
-            back_female: z.url().nullable(),
-            back_shiny: z.url().nullable(),
-            back_shiny_female: z.url().nullable(),
-            front_default: z.url().nullable(),
-            front_female: z.url().nullable(),
-            front_shiny: z.url().nullable(),
-            front_shiny_female: z.url().nullable(),
-        }).loose()
+        // sprites: z.object({
+        //     back_default: z.url().nullable(),
+        //     back_female: z.url().nullable(),
+        //     back_shiny: z.url().nullable(),
+        //     back_shiny_female: z.url().nullable(),
+        //     front_default: z.url().nullable(),
+        //     front_female: z.url().nullable(),
+        //     front_shiny: z.url().nullable(),
+        //     front_shiny_female: z.url().nullable(),
+        // }).loose()
     }).loose()
 })
 

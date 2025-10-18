@@ -4,12 +4,14 @@ import { StructuredOutput, useToolOutput } from './helpers/use-tool-output'
 import PokemonCard from './Card'
 import useEmblaCarousel from "embla-carousel-react"
 import { getPokemon } from './helpers/fetch-pokemon'
+import { useToolOutputMeta, type OutputMeta } from './helpers/use-tool-meta'
 
 const recommended = ["pikachu", "bulbasaur", "charmander", "squirtle"]
 
 function App() {
     const toolInput: InputSchema | null = useToolInput()
     const toolOutput: StructuredOutput | null = useToolOutput()
+    const toolMeta: OutputMeta | null = useToolOutputMeta()
 
     const [emblaRef, _emblaApi] = useEmblaCarousel({
         align: "center",
@@ -20,6 +22,7 @@ function App() {
     })
 
     const [name, setName] = useState("")
+    const [followUp, setFollowUp] = useState("")
     const [error, setError] = useState("")
 
     const isLoading: boolean = useMemo(() => {
@@ -27,7 +30,7 @@ function App() {
     }, [toolOutput, error])
 
     const sprites: { title: string, url: string | null }[] | null = useMemo(() => {
-        const sprites = toolOutput?.result.sprites
+        const sprites = toolMeta?.sprites
         if (!sprites) {
             return null
         }
@@ -47,6 +50,16 @@ function App() {
         setError("")
         try {
             await getPokemon(name)
+        } catch (error) {
+            console.error(error)
+            setError("Oops, something went wrong! Please check try again later!")
+        }
+    }
+
+    async function sendFollowUp(message: string) {
+        setError("")
+        try {
+            await window.openai?.sendFollowUpMessage({ prompt: message })
         } catch (error) {
             console.error(error)
             setError("Oops, something went wrong! Please check try again later!")
@@ -79,6 +92,18 @@ function App() {
                         await getPokemonHelper(name)
                         setName("")
                     }}>Go</button>
+            </div>
+
+            <div className='flex flex-row gap-2 items-center'>
+                <h2 className="font-semibold">Ask More</h2>
+                <input onChange={(event) => setFollowUp(event.target.value)} className='py-1 px-2 border rounded-md' />
+                <button
+                    className="border rounded-md border-black bg-white py-1 px-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
+                    onClick={async () => {
+                        await sendFollowUp(followUp)
+                        setFollowUp("")
+                    }}>Send</button>
             </div>
 
             <div className='flex flex-col gap-2'>
